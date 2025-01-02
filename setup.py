@@ -7,9 +7,9 @@ def parse_requirements(filename):
     
 # requires = parse_requirements('requirements.txt')
 
-setup(name='common_utils',
+setup(name='melody',
       version='0.0.1',
-      description='Simple scripts for common tasks.',
+      description='fucking audio processing',
       author='The fastest man alive.',
       packages=find_packages(),
       install_requires=[])
