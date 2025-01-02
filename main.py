@@ -6,8 +6,6 @@ from melody.asr.paraformer import Paraformer
 from melody.vad.fsmn import Vad
 from melody.puncs.ct_trans import PuncCreator
 
-
-
 def gen_transcription(audio_fp:str = "./datafiles/recording.wav"):
 
     reader = SimpleAudioReader()
