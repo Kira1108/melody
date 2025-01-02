@@ -45,7 +45,8 @@ def extract_json_codeblock(json_string:str):
 class TurnDetector:
     
     model_name:str = "qwen2.5:0.5b"
-    def shutup(self, text:str):
+    def shutup(self, text:str) -> bool:
+        return True
         prompt = TURN_DETECT_PROMPT.format(text = text)
         response = ollama.chat(model=self.model_name, messages=[
         {
