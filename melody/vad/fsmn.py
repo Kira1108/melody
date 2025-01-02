@@ -15,7 +15,7 @@ def load_model():
 
 
 @dataclass
-class Vad:
+class FMSNVad:
     chunk_size: int = 200
     def __post_init__(self):
         self.model = load_model()
