@@ -6,7 +6,9 @@ from melody.asr.paraformer import Paraformer
 from melody.vad.fsmn import FMSNVad
 from melody.puncs.ct_trans import PuncCreator
 
-def gen_transcription(audio_fp:str = "./datafiles/recording.wav"):
+def gen_transcription(
+    audio_fp:str = "./datafiles/recording.wav", 
+    wait:bool = False):
 
     reader = SimpleAudioReader()
     asr = Paraformer.auto(seconds = 0.6) # 这个chunk可以设置的稍微小一点
@@ -18,7 +20,7 @@ def gen_transcription(audio_fp:str = "./datafiles/recording.wav"):
     # the chunk size is defined by the asr model, 0.6 seconds corresponds to 9600 frames
     for chunk, is_final in reader.stream(
         audio_fp, 
-        chunk_size = asr.chunk_stride, wait=False):
+        chunk_size = asr.chunk_stride, wait=wait):
         
         # asr inference
         transcription = asr.stream_asr(chunk)[0]['text']
