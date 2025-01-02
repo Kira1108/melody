@@ -5,6 +5,7 @@ from melody.io.reader import SimpleAudioReader
 from melody.asr.paraformer import Paraformer
 from melody.vad.fsmn import FMSNVad
 from melody.puncs.ct_trans import PuncCreator
+from melody.nlu.turn_pred import TurnDetector
 
 def gen_transcription(
     audio_fp:str = "./datafiles/recording.wav", 
@@ -14,6 +15,7 @@ def gen_transcription(
     asr = Paraformer.auto(seconds = 0.6) # 这个chunk可以设置的稍微小一点
     vad = FMSNVad(chunk_size = 200) # 这里vad不能设置的太大了，这样就不好折腾了, 这里的200和paraformer的chunksize没啥关系
     punc = PuncCreator()
+    td = TurnDetector()
 
 
     buffer = ''
