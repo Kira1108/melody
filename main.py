@@ -29,8 +29,8 @@ def gen_transcription(
         buffer += transcription
         status = "transient"
         
-        # stable state logic
-        if vad.shutup(chunk) or is_final:
+        # 句尾截止
+        if is_final:
             status = "stable"
             content = punc(buffer)
             buffer = ''
@@ -39,6 +39,19 @@ def gen_transcription(
                 "status":status,
                 "content":content
             }
+            
+        # 语意和音频截止
+        elif vad.shutup(chunk) and td.shutup(buffer):
+            status = "stable"
+            content = punc(buffer)
+            buffer = ''
+            val = {
+                "transcription": transcription,
+                "status":status,
+                "content":content
+            }
+            
+        # 未截止
         else:
             val = {
                 "transcription": transcription,
