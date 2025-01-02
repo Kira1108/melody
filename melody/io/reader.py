@@ -27,7 +27,7 @@ class SimpleAudioReader:
             
         return audio, sampling_rate
     
-    def stream(self, fp:str, chunk_size:int=1024) -> Generator[np.ndarray, None, None]:
+    def stream(self, fp:str, chunk_size:int=1024, wait:bool = True):
         """
         Streams audio data from a file.
         Args:
@@ -41,12 +41,15 @@ class SimpleAudioReader:
         chunk_seconds = chunk_size / self.target_sr
         num_chunks = math.ceil(len(audio) / chunk_size)
         for i in range(0, num_chunks):
-            time.sleep(chunk_seconds)
+            if wait:
+                time.sleep(chunk_seconds)
             start = i * chunk_size
             end = start + chunk_size
-            yield audio[start:end]
             
-    def generate(self, fp:str, chunk_size:int = 1024) -> Generator[np.ndarray, None, None]:
+            is_final = i == num_chunks - 1
+            yield audio[start:end], is_final
+            
+    def generate(self, fp:str, chunk_size:int = 1024):
         """
         Generates audio data from a file.
         Args:
@@ -55,10 +58,6 @@ class SimpleAudioReader:
         Yields:
             audio_chunk (np.ndarray): A chunk of audio data read from the file.
         """
-        audio, _ = self.read(fp)
-        
-        for i in range(0, len(audio), chunk_size):
-            yield audio[i:i+chunk_size]
-            
+        return self.stream(fp, chunk_size, wait = False)
 
 
