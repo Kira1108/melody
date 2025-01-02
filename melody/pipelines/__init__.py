@@ -7,6 +7,8 @@ from melody.vad.fsmn import FMSNVad
 from melody.puncs.ct_trans import PuncCreator
 from melody.nlu.turn_pred import TurnDetector
 
+from dataclasses import dataclass
+
 def gen_transcription(
     audio_fp:str = "./datafiles/recording.wav", 
     wait:bool = False):
@@ -64,8 +66,18 @@ def gen_transcription(
             }
         yield val
         
+
+@dataclass
+class SegmentationPipeline:
+    
+    def run(self, audio_fp:str, wait:bool = False):
+        segment_list = []
+        for transcription in gen_transcription(audio_fp=audio_fp, wait=wait):
+            if transcription['status'] == "stable":
+                segment_list.append(transcription['content'])
+        return segment_list
         
 if __name__ == "__main__":
-    for transcription in gen_transcription():
-        if transcription['status'] == "stable":
-            print(transcription)
+    segmentor = SegmentationPipeline()
+    segment_list = segmentor.run("./datafiles/recording.wav")
+    print(segment_list)
