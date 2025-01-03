@@ -8,7 +8,7 @@ from melody.puncs.ct_trans import PuncCreator
 from melody.nlu.turn_pred import TurnDetector
 
 def gen_transcription(
-    audio_fp:str = "./datafiles/recording.wav", 
+    audio_fp:str = "./datafiles/asr_example.wav", 
     wait:bool = False):
 
     reader = SimpleAudioReader()

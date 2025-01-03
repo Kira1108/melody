@@ -40,6 +40,7 @@ class SimpleAudioReader:
         
         chunk_seconds = chunk_size / self.target_sr
         num_chunks = math.ceil(len(audio) / chunk_size)
+        # num_chunks = len(audio) // chunk_size + 1
         for i in range(0, num_chunks):
             if wait:
                 time.sleep(chunk_seconds)
