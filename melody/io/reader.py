@@ -2,7 +2,7 @@ import math
 import time
 import wave
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List
 
 import librosa
 import numpy as np
@@ -11,9 +11,9 @@ import numpy as np
 @dataclass
 class SimpleAudioReader:
     
-    target_sr: int | None = 16000
+    target_sr: int = 16000
     
-    def read(self, fp:str) -> tuple[np.ndarray, int]:
+    def read(self, fp:str):
         """
         Reads audio data from a file.
         Args:
@@ -88,7 +88,7 @@ class ByteChunkReader:
     
     chunk_duration_ms:int = 40
     
-    def read(self, fp:str) ->Tuple[bytes, tuple]:
+    def read(self, fp:str):
         with wave.open(fp, 'rb') as wf:
             params = wf.getparams()
             channels, sampwidth, framerate, nframes = params[:4]

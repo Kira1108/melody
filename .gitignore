@@ -133,3 +133,4 @@ build/
 common_utils.egg-info/
 .virtual_documents/
 *.ipynb
+tencent_seg*
