@@ -1,9 +1,12 @@
+import math
+import time
+import wave
 from dataclasses import dataclass
+from typing import List, Tuple
+
 import librosa
 import numpy as np
-import time
-from typing import Generator
-import math
+
 
 @dataclass
 class SimpleAudioReader:
@@ -60,5 +63,46 @@ class SimpleAudioReader:
             audio_chunk (np.ndarray): A chunk of audio data read from the file.
         """
         return self.stream(fp, chunk_size, wait = False)
+    
+
+@dataclass
+class ByteChunkReader:
+    """
+    ByteChunkReader is a class for reading and splitting audio files into byte chunks.
+    Attributes:
+        chunk_duration_ms (int): Duration of each chunk in milliseconds. Default is 40ms.
+    Methods:
+        read(fp: str) -> Tuple[bytes, tuple]:
+            Reads the entire PCM data from the given file path and returns it along with the wave file parameters.
+            Args:
+                fp (str): File path to the audio file.
+            Returns:
+                Tuple[bytes, tuple]: A tuple containing the PCM data and the wave file parameters.
+        read_chunks(fp: str) -> List[bytes]:
+            Reads the audio file and splits the PCM data into chunks.
+            Args:
+                fp (str): File path to the audio file.
+            Returns:
+                List[bytes]: A list of byte chunks.
+    """
+    
+    chunk_duration_ms:int = 40
+    
+    def read(self, fp:str) ->Tuple[bytes, tuple]:
+        with wave.open(fp, 'rb') as wf:
+            params = wf.getparams()
+            channels, sampwidth, framerate, nframes = params[:4]
+            pcm_data = wf.readframes(nframes)
+            return pcm_data, params
+    
+    def _split_chunks(self, pcm_data:bytes, params:list) -> List[bytes]:
+        channels, sampwidth, framerate, nframes = params[:4]
+        chunk_size = int(framerate * self.chunk_duration_ms / 1000) * channels * sampwidth
+        chunks = [pcm_data[i:i + chunk_size] for i in range(0, len(pcm_data), chunk_size)]
+        return chunks
+    
+    def read_chunks(self, fp:str) -> List[bytes]:
+        pcm_data, params = self.read(fp)
+        return self._split_chunks(pcm_data, params)
 
 
