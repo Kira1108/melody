@@ -12,3 +12,4 @@ def timer(name: str = "Unnamed process"):
             return result
         return wrapper
     return decorator
+
