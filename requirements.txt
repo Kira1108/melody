@@ -1,0 +1,8 @@
+setuptools
+pydub
+librosa
+numpy
+nest_asyncio
+websockets
+ollama
+funasr
