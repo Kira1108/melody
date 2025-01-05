@@ -1,71 +1,62 @@
-import logging
-logging.basicConfig(level=logging.INFO)
+import numpy as np
+import torch
+torch.set_num_threads(1)
+import pyaudio
+from functools import lru_cache 
+import threading
 
-from melody.io.reader import SimpleAudioReader
-from melody.asr.paraformer import Paraformer
-from melody.vad.fsmn import FMSNVad
-from melody.puncs.ct_trans import PuncCreator
-from melody.nlu.turn_pred import TurnDetector
+@lru_cache(maxsize=None)
+def load_model():
+    model, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad',
+                              model='silero_vad',
+                              force_reload=True)
+    return model, utils
 
-def gen_transcription(
-    audio_fp:str = "./datafiles/recording.wav", 
-    wait:bool = False):
+def int2float(sound):
+    abs_max = np.abs(sound).max()
+    sound = sound.astype('float32')
+    if abs_max > 0:
+        sound *= 1/32768
+    sound = sound.squeeze()
+    return sound
 
-    reader = SimpleAudioReader()
-    asr = Paraformer.auto(seconds = 0.6) # 这个chunk可以设置的稍微小一点
-    vad = FMSNVad(chunk_size = 200) # 这里vad不能设置的太大了，这样就不好折腾了, 这里的200和paraformer的chunksize没啥关系
-    punc = PuncCreator()
-    td = TurnDetector()
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+SAMPLE_RATE = 16000
+CHUNK = int(SAMPLE_RATE / 10)
+audio = pyaudio.PyAudio()
+num_samples = 512
+continue_recording = True
 
+def stop():
+    input("Press Enter to stop the recording:")
+    global continue_recording
+    continue_recording = False
 
-    buffer = ''
-    continuous_slience = 0
-    # the chunk size is defined by the asr model, 0.6 seconds corresponds to 9600 frames
-    for chunk, is_final in reader.stream(
-        audio_fp, 
-        chunk_size = asr.chunk_stride, wait=wait):
+def start_recording():
+    model, utils = load_model()
+    stream = audio.open(format=FORMAT,
+                    channels=CHANNELS,
+                    rate=SAMPLE_RATE,
+                    input=True,
+                    frames_per_buffer=CHUNK)
+    data = []
+    voiced_confidences = []
+    
+    global continue_recording
+    continue_recording = True    
+    stop_listener = threading.Thread(target=stop)
+    stop_listener.start()
+    print("Start Recoding...")
+    while continue_recording:
         
-        # asr inference
-        transcription = asr.stream_asr(chunk)[0]['text']
-        buffer += transcription
-        status = "transient"
-        
-        if transcription == '':
-            continuous_slience += 1
-        
-        # 句尾截止
-        if is_final:
-            status = "stable"
-            content = punc(buffer)
-            buffer = ''
-            val = {
-                "transcription": transcription,
-                "status":status,
-                "content":content
-            }
-            
-        # 语意和音频截止
-        elif vad.shutup(chunk) and td.shutup(buffer):
-            status = "stable"
-            content = punc(buffer)
-            buffer = ''
-            val = {
-                "transcription": transcription,
-                "status":status,
-                "content":content
-            }
-            
-        # 未截止
-        else:
-            val = {
-                "transcription": transcription,
-                "status":status,
-                "content":""
-            }
-        yield val
-        
+        audio_chunk = stream.read(num_samples)
+        data.append(audio_chunk)
+        audio_int16 = np.frombuffer(audio_chunk, np.int16);
+        audio_float32 = int2float(audio_int16)
+        new_confidence = model(torch.from_numpy(audio_float32), 16000).item()
+        voiced_confidences.append(new_confidence)
+        print(new_confidence, end='\r', flush=True)
         
 if __name__ == "__main__":
-    for transcription in gen_transcription():
-        if transcription['status'] == "stable":
-            print(transcription)
+    start_recording()
