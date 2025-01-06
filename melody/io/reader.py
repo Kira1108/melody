@@ -1,3 +1,5 @@
+import base64
+import io
 import math
 import time
 import wave
@@ -6,6 +8,7 @@ from typing import List
 
 import librosa
 import numpy as np
+from pydub import AudioSegment
 
 
 @dataclass
@@ -104,5 +107,32 @@ class ByteChunkReader:
     def read_chunks(self, fp:str) -> List[bytes]:
         pcm_data, params = self.read(fp)
         return self._split_chunks(pcm_data, params)
+    
+def split_audio_to_chunks(
+    file_path:str, 
+    chunk_length_ms:int):
+    audio = AudioSegment.from_wav(file_path)
+    chunks = [audio[i:i + chunk_length_ms] for i in range(0, len(audio), chunk_length_ms)]
+    return chunks
+
+def chunk_to_base64(chunk: AudioSegment):
+    buffer = io.BytesIO()
+    chunk.export(buffer, format="wav")
+    base64_audio = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    return base64_audio
+
+def process_audio(file_path:str, chunk_length_ms: int= 40):
+    chunks = split_audio_to_chunks(file_path, chunk_length_ms)
+    base64_chunks = [chunk_to_base64(chunk) for chunk in chunks]
+    return base64_chunks
+
+@dataclass
+class B64ChunkReader:
+    chunk_length_ms: int = 40
+    
+    def read(self, fp:str) -> List[str]:
+        return process_audio(
+            fp, 
+            chunk_length_ms=self.chunk_length_ms)
 
 
